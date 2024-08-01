@@ -42,7 +42,12 @@ class MyHomePage extends StatelessWidget {
   Widget _buildBody(
       ApiServiceProvider apiServiceProvider, BuildContext context) {
     if (apiServiceProvider.user == null) {
-      return Center(child: Text('No user data found'));
+      if (apiServiceProvider.isFetching) {
+        return const Center(
+          child: Text("Relax! fetching data"),
+        );
+      }
+      return const Center(child: Text('No user data found'));
     } else {
       return Column(
         children: [
