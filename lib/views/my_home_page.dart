@@ -11,60 +11,68 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apiServicePr = Provider.of<ApiServiceProvider>(context, listen: false);
+    // Use a Provider to get the ApiServiceProvider instance
+    final apiServiceProvider = Provider.of<ApiServiceProvider>(context);
 
+    // Fetch user data if not already available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (apiServicePr.user == null) {
-        apiServicePr.fetchUser(1);
+      if (apiServiceProvider.user == null && !apiServiceProvider.isFetching) {
+        apiServiceProvider.fetchUser(1);
       }
     });
 
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Consumer<ApiServiceProvider>(
-          builder: (context, apiService, child) {
-            return Text(apiService.user != null ? apiService.user!.role : "Loading");
-          },
-        ),
+        title: _buildAppBarTitle(apiServiceProvider),
       ),
-      body: Column(
+      body: _buildBody(apiServiceProvider, context),
+    );
+  }
+
+  Widget _buildAppBarTitle(ApiServiceProvider apiServiceProvider) {
+    return Text(
+      apiServiceProvider.user != null
+          ? apiServiceProvider.user!.role
+          : "Loading...",
+      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _buildBody(
+      ApiServiceProvider apiServiceProvider, BuildContext context) {
+    if (apiServiceProvider.user == null) {
+      return Center(child: Text('No user data found'));
+    } else {
+      return Column(
         children: [
-          const SizedBox(
-            height: 60,
-          ),
+          const SizedBox(height: 60),
           Center(
-            child: Consumer<ApiServiceProvider>(
-              builder: (context, apiService, child) {
-                if (apiService.user == null) {
-                  return const CircularProgressIndicator();
-                } else {
-                  return InkWell(
-                    onTap: () {
-                      getIt<NavigationService>().navigateToNamed(
-                        context,
-                        Navigation.detail,
-                        extra: NavigationData(
-                            role: apiService.user!.role,
-                            name: apiService.user!.name,
-                            email: apiService.user!.email),
-                      );
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: Image.network(
-                        apiService.user!.avatar,
-                        height: 100,
-                        width: 100,
-                      ),
-                    ),
-                  );
-                }
+            child: InkWell(
+              onTap: () {
+                getIt<NavigationService>().navigateToNamed(
+                  context,
+                  Navigation.detail,
+                  extra: NavigationData(
+                    role: apiServiceProvider.user!.role,
+                    name: apiServiceProvider.user!.name,
+                    email: apiServiceProvider.user!.email,
+                  ),
+                );
               },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(50),
+                child: Image.network(
+                  apiServiceProvider.user!.avatar,
+                  height: 100,
+                  width: 100,
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
         ],
-      ),
-    );
+      );
+    }
   }
 }
